@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduCompanion Tools</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="EduCompanion Logo" class="logo">
+            <button class="bell-button">
+                <img src="bell_icon.png" alt="Notifications" class="bell-icon">
+            </button>
+            <button class="todo">
+                <img src="timer.png" alt="Timer" class="todo-icon" id="openTimerModal">
+            </button>
+        </div>
+
+        <div class="features">
+            <h2>What we offer?</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <img src="note_icon.png" alt="Note Taking Icon">
+                    <button id="openModal">Note Taking</button>
+                </div>
+                <div class="feature-item">
+                    <img src="block_icon.png" alt="Distraction Blocker Icon">
+                    <button>Distraction Blocker</button>
+                </div>
+                <div class="feature-item">
+                    <img src="organizer_icon.png" alt="Resource Organizer Icon">
+                    <button>Resource Organizer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Button to display saved notes -->
+        <button id="showSavedNotes" class="saved-notes-btn">Saved Notes</button>
+
+        <!-- Section to display saved notes -->
+        <div id="savedNotesContainer" style="display: none;">
+            <h3>Saved Notes</h3>
+            <ul id="savedNotesList"></ul>
+            <button id="clearAllNotes">Clear All</button>
+        </div>
+
+    </div>
+
+    <!-- Note-Taking Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Write Your Notes</h2>
+            <textarea id="noteText" rows="8" cols="40" placeholder="Enter your notes here..."></textarea>
+            <br>
+            <button id="saveNote">Save Note</button>
+        </div>
+    </div>
+
+    <!-- Timer Modal for Stopwatch -->
+    <div id="timerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeTimerModal">&times;</span>
+            <h2>Stopwatch</h2>
+            <div id="stopwatch">
+                <p id="timerDisplay">00:00</p>
+                <button id="startStopBtn">Start</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
