@@ -28,6 +28,171 @@ window.onload = function() {
         }
     });
 
+
+    // Get the elements
+        var popup = document.getElementById('resource-organizer-popup');
+        var saveBtn = document.getElementById('save-resource-btn');
+        var closeBtn = document.querySelector('.close-btn');
+
+        // Function to get the active tab's URL
+        function getCurrentTabUrl(callback) {
+            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                var activeTab = tabs[0];
+                var activeTabUrl = activeTab.url;
+                callback(activeTabUrl);
+            });
+        }
+
+        // When the user clicks on the "Save Resource" button
+        saveBtn.onclick = function() {
+            // Capture the tag from the input field
+            var resourceTag = document.getElementById('resource-tag').value;
+
+            // Get the current tab URL
+            getCurrentTabUrl(function(url) {
+                // Create a resource object with the URL and tag
+                var resource = {
+                    tag: resourceTag,
+                    url: url
+                };
+
+                // Save the resource to Chrome storage
+                chrome.storage.sync.get({resources: []}, function(result) {
+                    var resources = result.resources;
+                    resources.push(resource);  // Add new resource to the array
+                    chrome.storage.sync.set({resources: resources}, function() {
+                        console.log('Resource saved successfully!');
+                    });
+                });
+            });
+
+            // Close the popup after saving
+            popup.style.display = 'none';
+        };
+
+        // Open the popup when the button is clicked
+        document.getElementById('resource-organizer-btn').onclick = function() {
+            popup.style.display = 'block';
+        };
+
+        // Close the popup when the close button is clicked
+        closeBtn.onclick = function() {
+            popup.style.display = 'none';
+        };
+
+        // Optionally close the popup when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target == popup) {
+                popup.style.display = 'none';
+            }
+        }
+
+        // Get elements for saving and displaying resources
+var saveBtn = document.getElementById('save-resource-btn');
+var viewSavedResourcesBtn = document.getElementById('view-saved-resources-btn');
+var closeSavedResourcesBtn = document.querySelector('.close-saved-resources-btn');
+var savedResourcesPopup = document.getElementById('saved-resources-container');
+var resourceList = document.getElementById('resource-list');
+var clearAllBtn = document.getElementById('clear-all-btn');
+
+// Function to get the current tab URL
+function getCurrentTabUrl(callback) {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        var activeTab = tabs[0];
+        var activeTabUrl = activeTab.url;
+        callback(activeTabUrl);
+    });
+}
+
+// Save the URL and tag when the user clicks "Save Resource"
+saveBtn.onclick = function() {
+    var resourceTag = document.getElementById('resource-tag').value;
+    getCurrentTabUrl(function(url) {
+        var resource = {
+            tag: resourceTag,
+            url: url
+        };
+
+        // Save the resource to Chrome storage
+        chrome.storage.sync.get({resources: []}, function(result) {
+            var resources = result.resources;
+            resources.push(resource);
+            chrome.storage.sync.set({resources: resources}, function() {
+                console.log('Resource saved successfully!');
+            });
+        });
+    });
+
+    // Optionally close the popup after saving
+    document.getElementById('resource-organizer-popup').style.display = 'none';
+};
+
+// Display saved resources when "Saved Resources" button is clicked
+viewSavedResourcesBtn.onclick = function() {
+    // Retrieve saved resources from Chrome storage
+    chrome.storage.sync.get({resources: []}, function(result) {
+        var resources = result.resources;
+        resourceList.innerHTML = '';  // Clear the previous list
+
+        if (resources.length > 0) {
+            // Loop through each resource and create a list item with an "X" delete button
+            resources.forEach(function(resource, index) {
+                var resourceDiv = document.createElement('div');
+                resourceDiv.className = 'resource-item';
+                resourceDiv.innerHTML = `
+                    <p><strong>Tag:</strong> ${resource.tag}</p>
+                    <a href="${resource.url}" target="_blank">${resource.url}</a>
+                    <button class="delete-btn" data-index="${index}">&times;</button> <!-- "X" button -->
+                `;
+                resourceList.appendChild(resourceDiv);
+            });
+
+            // Attach delete button event listeners
+            var deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var index = this.getAttribute('data-index');
+                    deleteResource(index); // Call function to delete the resource
+                });
+            });
+
+        } else {
+            resourceList.innerHTML = '<p>No resources saved yet.</p>';
+        }
+    });
+
+    // Show the popup with saved resources
+    savedResourcesPopup.style.display = 'block';
+};
+
+
+// Delete a specific resource
+function deleteResource(index) {
+    chrome.storage.sync.get({resources: []}, function(result) {
+        var resources = result.resources;
+        resources.splice(index, 1); // Remove the resource by index
+        chrome.storage.sync.set({resources: resources}, function() {
+            console.log('Resource deleted!');
+            viewSavedResourcesBtn.click(); // Refresh the list of saved resources
+        });
+    });
+}
+
+// Clear all resources when "Clear All" button is clicked
+clearAllBtn.onclick = function() {
+    chrome.storage.sync.set({resources: []}, function() {
+        console.log('All resources cleared!');
+        resourceList.innerHTML = '<p>No resources saved yet.</p>';
+    });
+};
+
+// Close the saved resources popup when close button is clicked
+closeSavedResourcesBtn.onclick = function() {
+    savedResourcesPopup.style.display = 'none';
+};
+
+
+
     // Open Timer modal
     openTimerModalBtn.onclick = function() {
         timerModal.style.display = "block";
