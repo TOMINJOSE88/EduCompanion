@@ -28,7 +28,7 @@ window.onload = function () {
     const site = blockSiteInput.value.trim();
     if (site) {
       // Add site to server
-      fetch("http://localhost:3000/api/blocked-sites", {
+      fetch("http://localhost:3002/api/blocked-sites", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,7 +61,7 @@ window.onload = function () {
 
   // Fetch blocked sites from the server and sync them with local storage
   function fetchAndSyncBlockedSites() {
-    fetch("http://localhost:3000/api/blocked-sites")
+    fetch("http://localhost:3002/api/blocked-sites")
       .then((response) => response.json())
       .then((blockedSites) => {
         // Store blocked sites in chrome.storage.sync
@@ -85,7 +85,7 @@ window.onload = function () {
 
   // Clear all blocked sites (both server and locally)
   clearBlockedSitesBtn.onclick = function () {
-    fetch("http://localhost:3000/api/clear-blocked-sites", {
+    fetch("http://localhost:3002/api/clear-blocked-sites", {
       method: "POST",
     })
       .then((response) => response.json())
@@ -139,86 +139,6 @@ window.onload = function () {
 
   // Sync blocked sites on load
   fetchAndSyncBlockedSites();
-
-  // ---------------- TIMER FUNCTIONALITY ----------------
-
-  var timerModal = document.getElementById("timerModal");
-  var openTimerModalBtn = document.getElementById("openTimerModal");
-  var closeTimerModalBtn = document.getElementById("closeTimerModal");
-  var timerDisplay = document.getElementById("timerDisplay");
-  var startStopBtn = document.getElementById("startStopBtn");
-  var resetBtn = document.getElementById("resetBtn");
-
-  let isRunning = false;
-  let minutes = 0;
-  let seconds = 0;
-
-  // Load the saved timer state from the background script when the popup is opened
-  chrome.runtime.sendMessage({ action: "getTimerState" }, function (response) {
-    minutes = response.minutes || 0;
-    seconds = response.seconds || 0;
-    isRunning = response.isRunning || false;
-
-    updateDisplay();
-
-    if (isRunning) {
-      startStopBtn.textContent = "Pause";
-      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
-    } else {
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
-    }
-  });
-
-  // Start or stop the timer
-  startStopBtn.onclick = function () {
-    if (!isRunning) {
-      chrome.runtime.sendMessage({ action: "startTimer" }, function (response) {
-        console.log(response.status);
-      });
-      startStopBtn.textContent = "Pause";
-      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
-    } else {
-      chrome.runtime.sendMessage({ action: "stopTimer" }, function (response) {
-        console.log(response.status);
-      });
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
-    }
-    isRunning = !isRunning;
-  };
-
-  // Reset the timer
-  resetBtn.onclick = function () {
-    chrome.runtime.sendMessage({ action: "resetTimer" }, function (response) {
-      console.log(response.status);
-      minutes = 0;
-      seconds = 0;
-      updateDisplay();
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when reset
-    });
-  };
-
-  // Function to update the display with the timer state
-  function updateDisplay() {
-    timerDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(
-      seconds
-    ).padStart(2, "0")}`;
-  }
-
-  // Listen for updates from the background script
-  chrome.runtime.onMessage.addListener(function (
-    message,
-    sender,
-    sendResponse
-  ) {
-    if (message.action === "updateTimer") {
-      minutes = message.minutes;
-      seconds = message.seconds;
-      updateDisplay();
-    }
-  });
   const todoModal = document.getElementById("todo-modal");
   const openTodoModalBtn = document.getElementById("open-todo-modal-btn");
   const closeTodoModalBtn = document.querySelector(".close-todo-modal-btn");
@@ -312,6 +232,87 @@ window.onload = function () {
       });
     });
   }
+
+  // ---------------- TIMER FUNCTIONALITY ----------------
+
+  var timerModal = document.getElementById("timerModal");
+  var openTimerModalBtn = document.getElementById("openTimerModal");
+  var closeTimerModalBtn = document.getElementById("closeTimerModal");
+  var timerDisplay = document.getElementById("timerDisplay");
+  var startStopBtn = document.getElementById("startStopBtn");
+  var resetBtn = document.getElementById("resetBtn");
+
+  let isRunning = false;
+  let minutes = 0;
+  let seconds = 0;
+
+  // Load the saved timer state from the background script when the popup is opened
+  chrome.runtime.sendMessage({ action: "getTimerState" }, function (response) {
+    minutes = response.minutes || 0;
+    seconds = response.seconds || 0;
+    isRunning = response.isRunning || false;
+
+    updateDisplay();
+
+    if (isRunning) {
+      startStopBtn.textContent = "Pause";
+      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
+    } else {
+      startStopBtn.textContent = "Start";
+      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
+    }
+  });
+
+  // Start or stop the timer
+  startStopBtn.onclick = function () {
+    if (!isRunning) {
+      chrome.runtime.sendMessage({ action: "startTimer" }, function (response) {
+        console.log(response.status);
+      });
+      startStopBtn.textContent = "Pause";
+      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
+    } else {
+      chrome.runtime.sendMessage({ action: "stopTimer" }, function (response) {
+        console.log(response.status);
+      });
+      startStopBtn.textContent = "Start";
+      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
+    }
+    isRunning = !isRunning;
+  };
+
+  // Reset the timer
+  resetBtn.onclick = function () {
+    chrome.runtime.sendMessage({ action: "resetTimer" }, function (response) {
+      console.log(response.status);
+      minutes = 0;
+      seconds = 0;
+      updateDisplay();
+      startStopBtn.textContent = "Start";
+      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when reset
+    });
+  };
+
+  // Function to update the display with the timer state
+  function updateDisplay() {
+    timerDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(
+      seconds
+    ).padStart(2, "0")}`;
+  }
+
+  // Listen for updates from the background script
+  chrome.runtime.onMessage.addListener(function (
+    message,
+    sender,
+    sendResponse
+  ) {
+    if (message.action === "updateTimer") {
+      minutes = message.minutes;
+      seconds = message.seconds;
+      updateDisplay();
+    }
+  });
+
   // ---------------- RESOURCE ORGANIZER ----------------
 
   var popup = document.getElementById("resource-organizer-popup");
