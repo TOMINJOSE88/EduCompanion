@@ -107,6 +107,7 @@ window.onload = function () {
       });
     });
   }
+
   // Open the popup when the "Distraction Blocker" button is clicked
   document.getElementById("distraction-blocker-btn").onclick = function () {
     blockerPopup.style.display = "block";
@@ -158,18 +159,56 @@ window.onload = function () {
 
   // Start blocking the added sites
   startBlockingBtn.onclick = function () {
-    chrome.runtime.sendMessage(
-      { action: "startBlocking" },
-      function (response) {
-        console.log(response.status);
-      }
-    );
+    // Get the existing rules
+    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+      // Remove any existing rules to avoid conflicts with IDs
+      const existingRuleIds = existingRules.map((rule) => rule.id);
+
+      // Remove old rules
+      chrome.declarativeNetRequest.updateDynamicRules(
+        {
+          removeRuleIds: existingRuleIds,
+        },
+        () => {
+          // Now add new blocking rules
+          chrome.storage.sync.get({ blockedSites: [] }, function (result) {
+            const blockedSites = result.blockedSites;
+
+            // Map each site to a rule, ensuring each rule gets a unique ID
+            const rules = blockedSites.map((site, index) => ({
+              id: index + 1, // Ensure unique ID for each rule
+              priority: 1,
+              action: { type: "block" },
+              condition: { urlFilter: site, resourceTypes: ["main_frame"] },
+            }));
+
+            // Add new rules
+            chrome.declarativeNetRequest.updateDynamicRules(
+              { addRules: rules },
+              () => {
+                console.log("Blocking rules updated.");
+              }
+            );
+          });
+        }
+      );
+    });
   };
 
   // Stop blocking the sites
   stopBlockingBtn.onclick = function () {
-    chrome.runtime.sendMessage({ action: "stopBlocking" }, function (response) {
-      console.log(response.status);
+    // Get all existing rules and remove them
+    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+      const ruleIds = existingRules.map((rule) => rule.id);
+
+      chrome.declarativeNetRequest.updateDynamicRules(
+        {
+          removeRuleIds: ruleIds,
+        },
+        () => {
+          console.log("Blocking stopped, all rules removed.");
+        }
+      );
     });
   };
 

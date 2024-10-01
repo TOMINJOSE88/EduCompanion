@@ -12,7 +12,6 @@ chrome.runtime.onInstalled.addListener(() => {
 // Consolidated onMessage listener for blocking and timer functionality
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "startBlocking") {
-    // Retrieve the blocked sites from Chrome's storage
     chrome.storage.sync.get({ blockedSites: [] }, function (result) {
       blockedSites = result.blockedSites;
       isBlocking = true;
@@ -50,28 +49,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Update blocking rules based on whether blocking is active or not
 function updateBlockingRules(sendResponse) {
-  const ruleIds = blockedSites.map((_, index) => index + 1); // Generate rule IDs
+  // Remove all old rules before adding new ones to avoid duplicate rule IDs
+  chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+    const existingRuleIds = existingRules.map((rule) => rule.id);
 
-  if (isBlocking && blockedSites.length > 0) {
-    const rules = blockedSites.map((site, index) => ({
-      id: index + 1, // Unique ID for each rule
-      priority: 1,
-      action: { type: "block" },
-      condition: { urlFilter: site, resourceTypes: ["main_frame"] }, // Block only main page requests
-    }));
-
-    // Add blocking rules dynamically
+    // Remove all existing rules before adding new ones
     chrome.declarativeNetRequest.updateDynamicRules(
-      {
-        addRules: rules, // Add new rules
-        removeRuleIds: [], // No removal here because we're adding
-      },
+      { removeRuleIds: existingRuleIds }, // Remove old rules
       () => {
-        console.log("Blocking rules updated.");
-        sendResponse({ status: "blocking started" });
+        const rules = blockedSites.map((site, index) => ({
+          id: index + 1, // Unique ID for each rule
+          priority: 1,
+          action: { type: "block" },
+          condition: { urlFilter: site, resourceTypes: ["main_frame"] }, // Block only main page requests
+        }));
+
+        // Add new blocking rules dynamically
+        chrome.declarativeNetRequest.updateDynamicRules(
+          {
+            addRules: rules, // Add new rules
+          },
+          () => {
+            console.log("Blocking rules updated.");
+            sendResponse({ status: "blocking started" });
+          }
+        );
       }
     );
-  }
+  });
 }
 
 // Function to remove all dynamic rules
