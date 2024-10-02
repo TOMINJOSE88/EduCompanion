@@ -5,22 +5,18 @@ let minutes = 0;
 let seconds = 0;
 let timer = null;
 
+// Listener to handle the blocking and timer-related actions
 chrome.runtime.onInstalled.addListener(() => {
   console.log("EduCompanion Extension Installed");
 });
 
-// Consolidated onMessage listener for blocking and timer functionality
+// Consolidated onMessage listener for blocking, timer, and other functionality
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "startBlocking") {
-    chrome.storage.sync.get({ blockedSites: [] }, function (result) {
-      blockedSites = result.blockedSites;
-      isBlocking = true;
-      updateBlockingRules(sendResponse); // Pass the response callback
-    });
+    startBlocking(sendResponse);
     return true; // Indicates the response will be sent asynchronously
   } else if (message.action === "stopBlocking") {
-    isBlocking = false;
-    removeAllRules(sendResponse); // Force removal of all rules
+    stopBlocking(sendResponse);
     return true; // Indicates the response will be sent asynchronously
   } else if (message.action === "startTimer") {
     startTimer();
@@ -29,15 +25,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     stopTimer();
     sendResponse({ status: "timer stopped" });
   } else if (message.action === "resetTimer") {
-    stopTimer();
-    minutes = 0;
-    seconds = 0;
-    chrome.storage.local.set({
-      timerMinutes: minutes,
-      timerSeconds: seconds,
-      timerRunning: false,
-    });
-    sendResponse({ status: "timer reset" });
+    resetTimer(sendResponse);
   } else if (message.action === "getTimerState") {
     sendResponse({
       minutes: minutes,
@@ -47,13 +35,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Update blocking rules based on whether blocking is active or not
+// ---------------- BLOCKING FUNCTIONALITY ----------------
+
+// Start blocking function
+function startBlocking(sendResponse) {
+  chrome.storage.sync.get({ blockedSites: [] }, function (result) {
+    blockedSites = result.blockedSites;
+    isBlocking = true;
+    updateBlockingRules(sendResponse); // Call the function to update the blocking rules
+  });
+}
+
+// Stop blocking function
+function stopBlocking(sendResponse) {
+  isBlocking = false;
+  removeAllRules(sendResponse); // Call the function to remove all rules
+}
+
+// Update blocking rules based on the current list of blocked sites
 function updateBlockingRules(sendResponse) {
-  // Remove all old rules before adding new ones to avoid duplicate rule IDs
   chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
     const existingRuleIds = existingRules.map((rule) => rule.id);
 
-    // Remove all existing rules before adding new ones
+    // Remove all old rules before adding new ones
     chrome.declarativeNetRequest.updateDynamicRules(
       { removeRuleIds: existingRuleIds }, // Remove old rules
       () => {
@@ -66,9 +70,7 @@ function updateBlockingRules(sendResponse) {
 
         // Add new blocking rules dynamically
         chrome.declarativeNetRequest.updateDynamicRules(
-          {
-            addRules: rules, // Add new rules
-          },
+          { addRules: rules }, // Add new rules
           () => {
             console.log("Blocking rules updated.");
             sendResponse({ status: "blocking started" });
@@ -79,20 +81,14 @@ function updateBlockingRules(sendResponse) {
   });
 }
 
-// Function to remove all dynamic rules
+// Remove all dynamic rules
 function removeAllRules(sendResponse) {
-  console.log("Attempting to remove all dynamic rules.");
-
-  // Use chrome.declarativeNetRequest.getDynamicRules to list all existing rules
   chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
     const ruleIdsToRemove = existingRules.map((rule) => rule.id); // Get all existing rule IDs
 
-    // Remove all dynamic rules by passing all existing rule IDs
+    // Remove all dynamic rules
     chrome.declarativeNetRequest.updateDynamicRules(
-      {
-        addRules: [], // No new rules
-        removeRuleIds: ruleIdsToRemove, // Remove all existing rules
-      },
+      { removeRuleIds: ruleIdsToRemove }, // Remove all existing rules
       () => {
         console.log("All dynamic rules removed.");
         sendResponse({ status: "blocking stopped, all rules removed" });
@@ -101,7 +97,8 @@ function removeAllRules(sendResponse) {
   });
 }
 
-// Timer Functions
+// ---------------- TIMER FUNCTIONALITY ----------------
+
 function startTimer() {
   if (!timer) {
     isRunning = true; // Set isRunning when the timer starts
@@ -139,3 +136,19 @@ function stopTimer() {
     });
   }
 }
+
+function resetTimer(sendResponse) {
+  stopTimer();
+  minutes = 0;
+  seconds = 0;
+  chrome.storage.local.set({
+    timerMinutes: minutes,
+    timerSeconds: seconds,
+    timerRunning: false,
+  });
+  sendResponse({ status: "timer reset" });
+}
+
+// ---------------- RESOURCE ORGANIZER AND NOTES (Optional Future Use) ----------------
+// Here, you can add background functionality related to the Resource Organizer or Notes if needed
+// These functionalities might not need background scripts unless you have specific long-running actions.
