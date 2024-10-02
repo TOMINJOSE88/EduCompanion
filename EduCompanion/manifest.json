@@ -8,7 +8,8 @@
     "activeTab",
     "tabs",
     "background",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "http://localhost:3000/"
   ],
   "host_permissions": ["<all_urls>"],
   "action": {

@@ -1,28 +1,153 @@
 window.onload = function () {
-  // Timer elements
-  var timerModal = document.getElementById("timerModal");
-  var openTimerModalBtn = document.getElementById("openTimerModal");
-  var closeTimerModalBtn = document.getElementById("closeTimerModal");
-  var timerDisplay = document.getElementById("timerDisplay");
-  var startStopBtn = document.getElementById("startStopBtn");
-  var resetBtn = document.getElementById("resetBtn");
-  var blockerPopup = document.getElementById("blocker-popup");
-  var blockSiteInput = document.getElementById("block-site-input");
-  var addBlockSiteBtn = document.getElementById("add-block-site-btn");
-  var blockedSitesList = document.getElementById("blocked-sites-list");
-  var clearBlockedSitesBtn = document.getElementById("clear-blocked-sites-btn");
-  var startBlockingBtn = document.getElementById("start-blocking-btn");
-  var stopBlockingBtn = document.getElementById("stop-blocking-btn");
-  var todoModal = document.getElementById("todo-modal");
-  var openTodoModalBtn = document.getElementById("open-todo-modal-btn");
-  var closeTodoModalBtn = document.querySelector(".close-todo-modal-btn");
-  // To-Do elements
-  var todoInput = document.getElementById("new-todo-input");
-  var addTodoBtn = document.getElementById("add-todo-btn");
-  var todoList = document.getElementById("todo-list");
-  var clearTodosBtn = document.getElementById("clear-todos-btn");
+  // ---------------- DISTRACTION BLOCKER ----------------
 
-  // Load saved To-Do items when popup is opened
+  // Elements for distraction blocker
+  const blockerPopup = document.getElementById("blocker-popup");
+  const blockSiteInput = document.getElementById("block-site-input");
+  const addBlockSiteBtn = document.getElementById("add-block-site-btn");
+  const blockedSitesList = document.getElementById("blocked-sites-list");
+  const clearBlockedSitesBtn = document.getElementById(
+    "clear-blocked-sites-btn"
+  );
+  const startBlockingBtn = document.getElementById("start-blocking-btn");
+  const stopBlockingBtn = document.getElementById("stop-blocking-btn");
+
+  // Open the popup when the "Distraction Blocker" button is clicked
+  document.getElementById("distraction-blocker-btn").onclick = function () {
+    blockerPopup.style.display = "block";
+    fetchAndSyncBlockedSites(); // Fetch blocked sites from server and sync with local storage
+  };
+
+  // Close the popup when the close button (X) is clicked
+  document.querySelector(".close-blocker-btn").onclick = function () {
+    blockerPopup.style.display = "none";
+  };
+
+  // Add a new site to the block list (sync with server and local)
+  addBlockSiteBtn.onclick = function () {
+    const site = blockSiteInput.value.trim();
+    if (site) {
+      // Add site to server
+      fetch("http://localhost:3002/api/blocked-sites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ site: site }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Site blocked on server:", data);
+          // Now sync with local storage
+          syncWithLocalStorage(site);
+        })
+        .catch((error) => console.error("Error blocking site:", error));
+    }
+    blockSiteInput.value = ""; // Clear input field
+  };
+
+  // Sync blocked site with local storage and declarativeNetRequest
+  function syncWithLocalStorage(site) {
+    chrome.storage.sync.get({ blockedSites: [] }, function (result) {
+      const blockedSites = result.blockedSites;
+      blockedSites.push(site); // Add site to local storage
+      chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
+        console.log("Blocked site synced to local storage.");
+        // Also refresh UI
+        displayBlockedSites(blockedSites);
+      });
+    });
+  }
+
+  // Fetch blocked sites from the server and sync them with local storage
+  function fetchAndSyncBlockedSites() {
+    fetch("http://localhost:3002/api/blocked-sites")
+      .then((response) => response.json())
+      .then((blockedSites) => {
+        // Store blocked sites in chrome.storage.sync
+        chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
+          console.log("Blocked sites synced to local storage.");
+          displayBlockedSites(blockedSites); // Display blocked sites in UI
+        });
+      })
+      .catch((error) => console.error("Error syncing blocked sites:", error));
+  }
+
+  // Display blocked sites in the popup
+  function displayBlockedSites(blockedSites) {
+    blockedSitesList.innerHTML = ""; // Clear the current list
+    blockedSites.forEach((site, index) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = site;
+      blockedSitesList.appendChild(listItem);
+    });
+  }
+
+  // Clear all blocked sites (both server and locally)
+  clearBlockedSitesBtn.onclick = function () {
+    fetch("http://localhost:3002/api/clear-blocked-sites", {
+      method: "POST",
+    })
+      .then((response) => response.json())
+      .then(() => {
+        console.log("All blocked sites cleared.");
+        chrome.storage.sync.set({ blockedSites: [] }, () => {
+          displayBlockedSites([]); // Clear the UI
+        });
+      })
+      .catch((error) => console.error("Error clearing blocked sites:", error));
+  };
+
+  // Start blocking the added sites using chrome.declarativeNetRequest
+  startBlockingBtn.onclick = function () {
+    chrome.storage.sync.get({ blockedSites: [] }, function (result) {
+      const blockedSites = result.blockedSites;
+      const rules = blockedSites.map((site, index) => ({
+        id: index + 1, // Ensure unique ID for each rule
+        priority: 1,
+        action: { type: "block" },
+        condition: { urlFilter: site, resourceTypes: ["main_frame"] },
+      }));
+
+      // Remove any existing rules and add new ones
+      chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+        const existingRuleIds = existingRules.map((rule) => rule.id);
+
+        chrome.declarativeNetRequest.updateDynamicRules(
+          { removeRuleIds: existingRuleIds, addRules: rules },
+          () => {
+            console.log("Blocking rules updated.");
+          }
+        );
+      });
+    });
+  };
+
+  // Stop blocking the sites
+  stopBlockingBtn.onclick = function () {
+    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+      const ruleIds = existingRules.map((rule) => rule.id);
+
+      chrome.declarativeNetRequest.updateDynamicRules(
+        { removeRuleIds: ruleIds },
+        () => {
+          console.log("Blocking stopped, all rules removed.");
+        }
+      );
+    });
+  };
+
+  // Sync blocked sites on load
+  fetchAndSyncBlockedSites();
+  const todoModal = document.getElementById("todo-modal");
+  const openTodoModalBtn = document.getElementById("open-todo-modal-btn");
+  const closeTodoModalBtn = document.querySelector(".close-todo-modal-btn");
+  const todoInput = document.getElementById("new-todo-input");
+  const addTodoBtn = document.getElementById("add-todo-btn");
+  const todoList = document.getElementById("todo-list");
+  const clearTodosBtn = document.getElementById("clear-todos-btn");
+
+  // Load saved To-Do items when the popup is opened
   loadTodos();
 
   // Open To-Do List Modal
@@ -44,7 +169,7 @@ window.onload = function () {
 
   // Add new To-Do item
   addTodoBtn.onclick = function () {
-    var todoText = todoInput.value.trim();
+    const todoText = todoInput.value.trim();
     if (todoText) {
       addTodoItem(todoText);
       saveTodoItem(todoText);
@@ -62,7 +187,7 @@ window.onload = function () {
   // Function to load saved To-Do items from storage
   function loadTodos() {
     chrome.storage.sync.get({ todos: [] }, function (result) {
-      var todos = result.todos;
+      const todos = result.todos;
       todoList.innerHTML = ""; // Clear existing list
       todos.forEach(function (todo, index) {
         addTodoItem(todo, index);
@@ -72,11 +197,11 @@ window.onload = function () {
 
   // Function to add a new To-Do item to the UI
   function addTodoItem(todoText, index) {
-    var li = document.createElement("li");
+    const li = document.createElement("li");
     li.textContent = todoText;
 
     // Add delete button for each item
-    var deleteBtn = document.createElement("button");
+    const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Delete";
     deleteBtn.onclick = function () {
       deleteTodoItem(index);
@@ -89,7 +214,7 @@ window.onload = function () {
   // Function to save a new To-Do item to Chrome's storage
   function saveTodoItem(todoText) {
     chrome.storage.sync.get({ todos: [] }, function (result) {
-      var todos = result.todos;
+      const todos = result.todos;
       todos.push(todoText); // Add new item to the array
       chrome.storage.sync.set({ todos: todos }, function () {
         console.log("To-Do item saved!");
@@ -100,7 +225,7 @@ window.onload = function () {
   // Function to delete a To-Do item
   function deleteTodoItem(index) {
     chrome.storage.sync.get({ todos: [] }, function (result) {
-      var todos = result.todos;
+      const todos = result.todos;
       todos.splice(index, 1); // Remove the item by index
       chrome.storage.sync.set({ todos: todos }, function () {
         loadTodos(); // Reload the To-Do list after deleting
@@ -108,112 +233,14 @@ window.onload = function () {
     });
   }
 
-  // Open the popup when the "Distraction Blocker" button is clicked
-  document.getElementById("distraction-blocker-btn").onclick = function () {
-    blockerPopup.style.display = "block";
-  };
+  // ---------------- TIMER FUNCTIONALITY ----------------
 
-  // Close the popup when the close button (X) is clicked
-  document.querySelector(".close-blocker-btn").onclick = function () {
-    blockerPopup.style.display = "none";
-  };
-
-  // Add site to block list
-  addBlockSiteBtn.onclick = function () {
-    var site = blockSiteInput.value.trim();
-    if (site) {
-      // Ensure the site URL starts with http/https
-      if (!/^https?:\/\//i.test(site)) {
-        site = "http://" + site; // Add "http://" if the user hasn't added it
-      }
-      chrome.storage.sync.get({ blockedSites: [] }, function (result) {
-        var blockedSites = result.blockedSites;
-        blockedSites.push(site);
-        chrome.storage.sync.set({ blockedSites: blockedSites }, function () {
-          displayBlockedSites(); // Update UI
-        });
-      });
-    }
-    blockSiteInput.value = ""; // Clear the input field
-  };
-
-  // Display blocked sites
-  function displayBlockedSites() {
-    chrome.storage.sync.get({ blockedSites: [] }, function (result) {
-      var blockedSites = result.blockedSites;
-      blockedSitesList.innerHTML = ""; // Clear the list
-      blockedSites.forEach(function (site, index) {
-        var listItem = document.createElement("li");
-        listItem.textContent = site;
-        blockedSitesList.appendChild(listItem);
-      });
-    });
-  }
-
-  // Clear all blocked sites
-  clearBlockedSitesBtn.onclick = function () {
-    chrome.storage.sync.set({ blockedSites: [] }, function () {
-      displayBlockedSites();
-    });
-  };
-
-  // Start blocking the added sites
-  startBlockingBtn.onclick = function () {
-    // Get the existing rules
-    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
-      // Remove any existing rules to avoid conflicts with IDs
-      const existingRuleIds = existingRules.map((rule) => rule.id);
-
-      // Remove old rules
-      chrome.declarativeNetRequest.updateDynamicRules(
-        {
-          removeRuleIds: existingRuleIds,
-        },
-        () => {
-          // Now add new blocking rules
-          chrome.storage.sync.get({ blockedSites: [] }, function (result) {
-            const blockedSites = result.blockedSites;
-
-            // Map each site to a rule, ensuring each rule gets a unique ID
-            const rules = blockedSites.map((site, index) => ({
-              id: index + 1, // Ensure unique ID for each rule
-              priority: 1,
-              action: { type: "block" },
-              condition: { urlFilter: site, resourceTypes: ["main_frame"] },
-            }));
-
-            // Add new rules
-            chrome.declarativeNetRequest.updateDynamicRules(
-              { addRules: rules },
-              () => {
-                console.log("Blocking rules updated.");
-              }
-            );
-          });
-        }
-      );
-    });
-  };
-
-  // Stop blocking the sites
-  stopBlockingBtn.onclick = function () {
-    // Get all existing rules and remove them
-    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
-      const ruleIds = existingRules.map((rule) => rule.id);
-
-      chrome.declarativeNetRequest.updateDynamicRules(
-        {
-          removeRuleIds: ruleIds,
-        },
-        () => {
-          console.log("Blocking stopped, all rules removed.");
-        }
-      );
-    });
-  };
-
-  // Display blocked sites on page load
-  displayBlockedSites();
+  var timerModal = document.getElementById("timerModal");
+  var openTimerModalBtn = document.getElementById("openTimerModal");
+  var closeTimerModalBtn = document.getElementById("closeTimerModal");
+  var timerDisplay = document.getElementById("timerDisplay");
+  var startStopBtn = document.getElementById("startStopBtn");
+  var resetBtn = document.getElementById("resetBtn");
 
   let isRunning = false;
   let minutes = 0;
@@ -236,7 +263,58 @@ window.onload = function () {
     }
   });
 
-  // Get the elements
+  // Start or stop the timer
+  startStopBtn.onclick = function () {
+    if (!isRunning) {
+      chrome.runtime.sendMessage({ action: "startTimer" }, function (response) {
+        console.log(response.status);
+      });
+      startStopBtn.textContent = "Pause";
+      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
+    } else {
+      chrome.runtime.sendMessage({ action: "stopTimer" }, function (response) {
+        console.log(response.status);
+      });
+      startStopBtn.textContent = "Start";
+      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
+    }
+    isRunning = !isRunning;
+  };
+
+  // Reset the timer
+  resetBtn.onclick = function () {
+    chrome.runtime.sendMessage({ action: "resetTimer" }, function (response) {
+      console.log(response.status);
+      minutes = 0;
+      seconds = 0;
+      updateDisplay();
+      startStopBtn.textContent = "Start";
+      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when reset
+    });
+  };
+
+  // Function to update the display with the timer state
+  function updateDisplay() {
+    timerDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(
+      seconds
+    ).padStart(2, "0")}`;
+  }
+
+  // Listen for updates from the background script
+  chrome.runtime.onMessage.addListener(function (
+    message,
+    sender,
+    sendResponse
+  ) {
+    if (message.action === "updateTimer") {
+      minutes = message.minutes;
+      seconds = message.seconds;
+      updateDisplay();
+    }
+  });
+
+  // ---------------- RESOURCE ORGANIZER ----------------
+
   var popup = document.getElementById("resource-organizer-popup");
   var saveBtn = document.getElementById("save-resource-btn");
   var closeBtn = document.querySelector(".close-btn");
@@ -295,7 +373,6 @@ window.onload = function () {
   };
 
   // Get elements for saving and displaying resources
-  var saveBtn = document.getElementById("save-resource-btn");
   var viewSavedResourcesBtn = document.getElementById(
     "view-saved-resources-btn"
   );
@@ -307,38 +384,6 @@ window.onload = function () {
   );
   var resourceList = document.getElementById("resource-list");
   var clearAllBtn = document.getElementById("clear-all-btn");
-
-  // Function to get the current tab URL
-  function getCurrentTabUrl(callback) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      var activeTab = tabs[0];
-      var activeTabUrl = activeTab.url;
-      callback(activeTabUrl);
-    });
-  }
-
-  // Save the URL and tag when the user clicks "Save Resource"
-  saveBtn.onclick = function () {
-    var resourceTag = document.getElementById("resource-tag").value;
-    getCurrentTabUrl(function (url) {
-      var resource = {
-        tag: resourceTag,
-        url: url,
-      };
-
-      // Save the resource to Chrome storage
-      chrome.storage.sync.get({ resources: [] }, function (result) {
-        var resources = result.resources;
-        resources.push(resource);
-        chrome.storage.sync.set({ resources: resources }, function () {
-          console.log("Resource saved successfully!");
-        });
-      });
-    });
-
-    // Optionally close the popup after saving
-    document.getElementById("resource-organizer-popup").style.display = "none";
-  };
 
   // Display saved resources when "Saved Resources" button is clicked
   viewSavedResourcesBtn.onclick = function () {
@@ -353,10 +398,10 @@ window.onload = function () {
           var resourceDiv = document.createElement("div");
           resourceDiv.className = "resource-item";
           resourceDiv.innerHTML = `
-                    <p><strong>Tag:</strong> ${resource.tag}</p>
-                    <a href="${resource.url}" target="_blank">${resource.url}</a>
-                    <button class="delete-btn" data-index="${index}">&times;</button> <!-- "X" button -->
-                `;
+            <p><strong>Tag:</strong> ${resource.tag}</p>
+            <a href="${resource.url}" target="_blank">${resource.url}</a>
+            <button class="delete-btn" data-index="${index}">&times;</button> <!-- "X" button -->
+          `;
           resourceList.appendChild(resourceDiv);
         });
 
@@ -402,68 +447,8 @@ window.onload = function () {
     savedResourcesPopup.style.display = "none";
   };
 
-  // Open Timer modal
-  openTimerModalBtn.onclick = function () {
-    timerModal.style.display = "block";
-  };
+  // ---------------- NOTE-TAKING FUNCTIONALITY ----------------
 
-  // Close Timer modal
-  closeTimerModalBtn.onclick = function () {
-    timerModal.style.display = "none";
-  };
-
-  // Start or stop the timer
-  startStopBtn.onclick = function () {
-    if (!isRunning) {
-      chrome.runtime.sendMessage({ action: "startTimer" }, function (response) {
-        console.log(response.status);
-      });
-      startStopBtn.textContent = "Pause";
-      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
-    } else {
-      chrome.runtime.sendMessage({ action: "stopTimer" }, function (response) {
-        console.log(response.status);
-      });
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
-    }
-    isRunning = !isRunning;
-  };
-
-  // Reset the timer
-  resetBtn.onclick = function () {
-    chrome.runtime.sendMessage({ action: "resetTimer" }, function (response) {
-      console.log(response.status);
-      minutes = 0;
-      seconds = 0;
-      updateDisplay();
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when reset
-    });
-  };
-
-  // Function to update the display with the timer state
-  function updateDisplay() {
-    timerDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(
-      seconds
-    ).padStart(2, "0")}`;
-  }
-
-  // Listen for updates from the background script
-  chrome.runtime.onMessage.addListener(function (
-    message,
-    sender,
-    sendResponse
-  ) {
-    if (message.action === "updateTimer") {
-      minutes = message.minutes;
-      seconds = message.seconds;
-      updateDisplay();
-    }
-  });
-
-  // ----------------------------------------
-  // Note-Taking Feature
   var modal = document.getElementById("noteModal");
   var openModalBtn = document.getElementById("openModal");
   var closeModalBtn = document.getElementById("closeModal");
