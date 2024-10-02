@@ -68,6 +68,12 @@ If you'd like to package the extension using Docker:
 Build the Docker Image
 Before running the project, you need to build the Docker image. Run the following command from the project root directory:
 
-docker build -t my-chrome-extension .
-docker run -d my-chrome-extension
+docker build -t username/imagename .
+docker run -d username/imagename
+
+View running containers:
+docker ps
+
+View built Docker images:
+docker images
 
