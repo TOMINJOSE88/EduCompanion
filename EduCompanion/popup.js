@@ -550,4 +550,22 @@ window.onload = function () {
       });
     });
   }
+
+  document.querySelectorAll('.feature-item button').forEach(button => {
+    button.addEventListener('mouseover', function() {
+      let description = button.getAttribute('data-description');
+      let tooltip = document.createElement('span');
+      tooltip.classList.add('tooltiptext');
+      tooltip.innerHTML = description;
+      button.appendChild(tooltip);
+    });
+  
+    button.addEventListener('mouseout', function() {
+      let tooltip = button.querySelector('.tooltiptext');
+      if (tooltip) {
+        button.removeChild(tooltip);
+      }
+    });
+  });
+  
 };
