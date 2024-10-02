@@ -234,51 +234,44 @@ window.onload = function () {
   }
 
   // ---------------- TIMER FUNCTIONALITY ----------------
-
-  var timerModal = document.getElementById("timerModal");
-  var openTimerModalBtn = document.getElementById("openTimerModal");
-  var closeTimerModalBtn = document.getElementById("closeTimerModal");
-  var timerDisplay = document.getElementById("timerDisplay");
-  var startStopBtn = document.getElementById("startStopBtn");
-  var resetBtn = document.getElementById("resetBtn");
+  const timerModal = document.getElementById("timerModal");
+  const openTimerModalBtn = document.getElementById("openTimerModal"); // Ensure this exists in your HTML
+  const closeTimerModalBtn = document.getElementById("closeTimerModal");
+  const timerDisplay = document.getElementById("timerDisplay");
+  const startStopBtn = document.getElementById("startStopBtn");
+  const resetBtn = document.getElementById("resetBtn");
 
   let isRunning = false;
   let minutes = 0;
   let seconds = 0;
 
-  // Load the saved timer state from the background script when the popup is opened
-  chrome.runtime.sendMessage({ action: "getTimerState" }, function (response) {
-    minutes = response.minutes || 0;
-    seconds = response.seconds || 0;
-    isRunning = response.isRunning || false;
+  // Open Timer modal
+  openTimerModalBtn.onclick = function () {
+    timerModal.style.display = "block";
+  };
 
-    updateDisplay();
-
-    if (isRunning) {
-      startStopBtn.textContent = "Pause";
-      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
-    } else {
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
-    }
-  });
+  // Close Timer modal
+  closeTimerModalBtn.onclick = function () {
+    timerModal.style.display = "none";
+  };
 
   // Start or stop the timer
   startStopBtn.onclick = function () {
     if (!isRunning) {
       chrome.runtime.sendMessage({ action: "startTimer" }, function (response) {
         console.log(response.status);
+        isRunning = true;
+        startStopBtn.textContent = "Pause";
+        timerDisplay.classList.add("red-indicator"); // Highlight when running
       });
-      startStopBtn.textContent = "Pause";
-      timerDisplay.classList.add("red-indicator"); // Show red indicator when running
     } else {
       chrome.runtime.sendMessage({ action: "stopTimer" }, function (response) {
         console.log(response.status);
+        isRunning = false;
+        startStopBtn.textContent = "Start";
+        timerDisplay.classList.remove("red-indicator"); // Remove highlight
       });
-      startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when paused
     }
-    isRunning = !isRunning;
   };
 
   // Reset the timer
@@ -289,7 +282,7 @@ window.onload = function () {
       seconds = 0;
       updateDisplay();
       startStopBtn.textContent = "Start";
-      timerDisplay.classList.remove("red-indicator"); // Remove red indicator when reset
+      timerDisplay.classList.remove("red-indicator");
     });
   };
 
