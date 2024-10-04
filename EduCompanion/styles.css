@@ -1,7 +1,7 @@
 body {
   font-family: "Arial", sans-serif;
   text-align: center;
-  background-color: #e5e5e5;
+  background-color: #d3d3d3;
   padding: 20px;
   color: #333;
 }
@@ -32,7 +32,7 @@ body {
   background-color: transparent;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s; /* Smooth transform effect */
+  transition: transform 0.5s; /* Smooth transform effect */
 }
 
 .bell-button:hover {
@@ -51,7 +51,7 @@ body {
   background-color: transparent;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s; /* Smooth transform effect */
+  transition: transform 0.4s; /* Smooth transform effect */
 }
 
 .todo:hover {
