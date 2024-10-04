@@ -9,10 +9,10 @@ body {
 .container {
   max-width: 1000px;
   margin: 0 auto;
-  border: 2px solid #333; /* Adds a solid border */
-  border-radius: 10px; /* Rounds the corners */
-  padding: 10px; /* Adds padding inside the border */
-  background-color: #f3ebeb; /* Background color inside the border */
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #f3ebeb;
 }
 
 .header {
@@ -25,42 +25,31 @@ body {
   margin-bottom: 0;
 }
 
-.bell-button {
+.bell-button, .todo {
   position: absolute;
-  top: 40px;
-  left: 40px;
   background-color: transparent;
   border: none;
   cursor: pointer;
-  transition: transform 0.5s; /* Smooth transform effect */
+  transition: transform 0.5s;
 }
 
-.bell-button:hover {
-  transform: scale(1.1); /* Scale up slightly on hover */
+.bell-button {
+  top: 40px;
+  left: 40px;
 }
 
-.bell-icon {
+.bell-button:hover, .todo:hover {
+  transform: scale(1.1);
+}
+
+.bell-icon, .todo-icon {
   width: 50px;
   height: 50px;
 }
 
 .todo {
-  position: absolute;
   top: 40px;
   right: 40px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.4s; /* Smooth transform effect */
-}
-
-.todo:hover {
-  transform: scale(1.1); /* Scale up slightly on hover */
-}
-
-.todo-icon {
-  width: 50px;
-  height: 50px;
 }
 
 .features {
@@ -89,11 +78,11 @@ h2 {
   width: 40px;
   height: 40px;
   margin-bottom: 5px;
-  transition: transform 0.2s; /* Smooth transform effect */
+  transition: transform 0.2s;
 }
 
 .feature-item img:hover {
-  transform: scale(1.1); /* Scale up slightly on hover */
+  transform: scale(1.1);
 }
 
 .feature-item p {
@@ -101,86 +90,26 @@ h2 {
   color: #333;
 }
 
-button {
+button, .feature-item button, .modal-content button, .popup-content button, #clear-todos-btn, #add-block-site-btn, #save-resource-btn, #view-saved-resources-btn {
   background-color: #4caf50;
   color: white;
   border: none;
   padding: 10px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s; /* Smooth transition effects */
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-button:hover {
-  background-color: #45a049; /* Darker green on hover */
-  transform: translateY(-2px); /* Slightly raise the button */
+button:hover, .feature-item button:hover, .modal-content button:hover, .popup-content button:hover, #clear-todos-btn:hover, #add-block-site-btn:hover, #save-resource-btn:hover, #view-saved-resources-btn:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
 }
 
-/* Modal Styles */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
-  max-width: 500px; /* Optional max width */
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: #000;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-textarea {
-  width: 100%;
+button {
   padding: 10px;
-  margin-top: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: 14px;
 }
 
 #saveNote {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-#saveNote:hover {
-  background-color: #45a049;
-}
-
-.saved-notes-btn {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
   margin-top: 10px;
 }
 
@@ -190,11 +119,6 @@ textarea {
 
 #clearAllNotes {
   background-color: #ff6347;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
   margin-top: 10px;
 }
 
@@ -210,7 +134,7 @@ textarea {
   font-weight: bold;
   margin-left: 10px;
   cursor: pointer;
-  transition: color 0.2s; /* Smooth color change */
+  transition: color 0.2s ease, font-size 0.2s ease;
 }
 
 .delete-btn:hover {
@@ -224,19 +148,7 @@ textarea {
 }
 
 #stopwatch button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
   margin: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s; /* Smooth transition effects */
-}
-
-#stopwatch button:hover {
-  background-color: #45a049;
-  transform: translateY(-2px); /* Slightly raise the button */
 }
 
 .timer-button {
@@ -250,7 +162,6 @@ textarea {
   height: 30px;
 }
 
-/* Red indicator class */
 .red-indicator {
   color: red;
 }
@@ -266,6 +177,10 @@ textarea {
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   z-index: 1000;
+  width: 500px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
 }
 
 .popup-content {
@@ -273,15 +188,14 @@ textarea {
   flex-direction: column;
 }
 
-.popup-content input,
-.popup-content textarea {
+.popup-content input, .popup-content textarea {
   margin-bottom: 10px;
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #ddd;
 }
 
-.close-btn {
+.close-btn, .close-todo-modal-btn {
   cursor: pointer;
   position: absolute;
   top: 10px;
@@ -289,160 +203,39 @@ textarea {
   font-size: 20px;
 }
 
-/* Style for the To-Do List button */
-.todo-btn {
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-  margin-top: 20px;
-  display: block;
-  width: 100%;
-  transition: background-color 0.3s, transform 0.2s; /* Smooth transition effects */
-}
-
-.todo-btn:hover {
-  background-color: #0056b3;
-  transform: translateY(-2px); /* Slightly raise the button */
-}
-
-/* Modal styles */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
-}
-
-.close-todo-modal-btn {
+.close, .close-todo-modal-btn {
   color: #aaa;
-  float: right;
   font-size: 28px;
   font-weight: bold;
 }
 
-.close-todo-modal-btn:hover,
-.close-todo-modal-btn:focus {
-  color: black;
+.close:hover, .close-todo-modal-btn:hover, .close:focus, .close-todo-modal-btn:focus {
+  color: #000;
   text-decoration: none;
-  cursor: pointer;
 }
 
-.popup {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  width: 500px;
-  height: auto;
-  max-width: 90%;
-  max-height: 90%;
-  overflow-y: auto;
-}
-
-/* Popup button styling */
-.popup-button {
-  display: inline-block;
-  margin-top: 10px;
+.todo-btn, .popup-button {
+  display: block;
+  margin-top: 20px;
+  width: 100%;
   padding: 10px 15px;
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.popup-button:hover {
-  background-color: #0056b3;
-}
-
-.popup-header {
-  font-size: 20px;
-  margin-bottom: 10px;
-}
-
-/* Button and Icon Hover Effects */
-button,
-.bell-button,
-.todo {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-button:hover,
-.bell-button:hover,
-.todo:hover {
-  background-color: #45a049; /* Change the background color on hover */
-  transform: scale(1.05); /* Slightly enlarge the button on hover */
+.todo-btn:hover, .popup-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
 }
 
-/* Specific hover effects for the icons */
-.bell-icon:hover,
-.todo-icon:hover,
-.feature-item img:hover {
-  opacity: 0.8; /* Slightly fade the icon */
-  transform: scale(1.1); /* Slightly enlarge the icon on hover */
-  transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth transition */
-}
-
-/* Feature Item Button Hover Effect */
-.feature-item button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease; /* Transition effect */
-}
-
-.feature-item button:hover {
-  background-color: #45a049; /* Darken button on hover */
-  transform: scale(1.05); /* Slightly enlarge button on hover */
-}
-
-/* Modal Button Hover Effect */
-.modal-content button:hover,
-.popup-content button:hover,
-#clear-todos-btn:hover,
-#add-block-site-btn:hover,
-#save-resource-btn:hover,
-#view-saved-resources-btn:hover {
-  background-color: #45a049; /* Change background color on hover */
-  transform: scale(1.05); /* Slightly enlarge the button on hover */
-}
-
-/* Clear All Button Hover Effect */
-.clear-all-btn:hover {
-  background-color: #e74c3c; /* Darken button on hover */
-  transform: scale(1.05); /* Slightly enlarge button on hover */
-}
-/* Tooltip container */
 .tooltip {
   position: relative;
   display: inline-block;
 }
 
-/* Tooltip text */
 .tooltip .tooltiptext {
   visibility: hidden;
   width: 200px;
@@ -453,15 +246,14 @@ button:hover,
   padding: 5px;
   position: absolute;
   z-index: 1;
-  bottom: 125%; /* Position the tooltip above the button */
+  bottom: 125%;
   left: 50%;
   margin-left: -100px;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s ease;
 }
 
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
 }
-
